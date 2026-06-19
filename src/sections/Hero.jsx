@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Navbar from "../components/Navbar";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 function Hero() {
   const navbarRef = useRef();
@@ -18,156 +19,133 @@ function Hero() {
   const [ended, setEnded] = useState(false);
 
   useEffect(() => {
-  const mm = gsap.matchMedia();
+    const mm = gsap.matchMedia();
 
-  mm.add(
-    {
-      mobile: "(max-width:768px)",
-      desktop: "(min-width:769px)",
-    },
-    (context) => {
-      const { mobile } = context.conditions;
+    mm.add(
+      {
+        mobile: "(max-width:768px)",
+        desktop: "(min-width:769px)",
+      },
+      (context) => {
+        const { mobile } = context.conditions;
 
-      const trigger = ScrollTrigger.create({
-        trigger: ".hero-wrapper",
-        start: "top top",
-        end: mobile ? "+=400" : "+=1600",
-        pin: true,
-        pinSpacing: true,
-        invalidateOnRefresh: true,
-      });
-
-      gsap.set(navbarRef.current, {
-        opacity: 0,
-        y: -60,
-      });
-
-      gsap.set(contentRef.current, {
-        opacity: 0,
-        y: 60,
-      });
-
-      const video = videoRef.current;
-
-      if (!video) return;
-
-      // keep reference available for cleanup
-      let startDesktop = null;
-
-      // DESKTOP → scroll starts video
-      if (!mobile) {
-        startDesktop = () => {
-          if (startedRef.current) return;
-
-          startedRef.current = true;
-
-          setStarted(true);
-
-          video.play();
-
-          window.removeEventListener(
-            "wheel",
-            startDesktop
-          );
-
-          window.removeEventListener(
-            "touchmove",
-            startDesktop
-          );
-        };
-
-        window.addEventListener(
-          "wheel",
-          startDesktop,
-          { passive: true }
-        );
-
-        window.addEventListener(
-          "touchmove",
-          startDesktop,
-          { passive: true }
-        );
-      }
-
-      const monitor = () => {
-        if (!video.duration) return;
-
-        const progress =
-          video.currentTime / video.duration;
-
-        if (
-          progress > 0.82 &&
-          !revealedRef.current
-        ) {
-          revealedRef.current = true;
-
-          gsap.to(navbarRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-          });
-
-          gsap.to(contentRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 1.4,
-          });
-        }
-      };
-
-      const complete = () => {
-        setEnded(true);
-
-        gsap.to(contentRef.current, {
-          y: -60,
-          duration: 1.2,
+        const trigger = ScrollTrigger.create({
+          trigger: ".hero-wrapper",
+          start: "top top",
+          end: mobile ? "+=400" : "+=1600",
+          pin: true,
+          pinSpacing: true,
+          invalidateOnRefresh: true,
         });
 
-        ScrollTrigger.refresh();
-      };
+        gsap.set(navbarRef.current, {
+          opacity: 0,
+          y: -60,
+        });
 
-      video.addEventListener(
-        "timeupdate",
-        monitor
-      );
+        gsap.set(contentRef.current, {
+          opacity: 0,
+          y: 60,
+        });
 
-      video.addEventListener(
-        "ended",
-        complete
-      );
+        
 
-      return () => {
-        trigger.kill();
+        const video = videoRef.current;
 
-        video.removeEventListener(
-          "timeupdate",
-          monitor
-        );
+        if (!video) return;
 
-        video.removeEventListener(
-          "ended",
-          complete
-        );
+        // keep reference available for cleanup
+        let startDesktop = null;
 
-        if (startDesktop) {
-          window.removeEventListener(
-            "wheel",
-            startDesktop
-          );
+        // DESKTOP → scroll starts video
+        if (!mobile) {
+          startDesktop = () => {
+            if (startedRef.current) return;
 
-          window.removeEventListener(
-            "touchmove",
-            startDesktop
-          );
+            startedRef.current = true;
+
+            setStarted(true);
+
+            video.play();
+
+            window.removeEventListener("wheel", startDesktop);
+
+            window.removeEventListener("touchmove", startDesktop);
+          };
+
+          window.addEventListener("wheel", startDesktop, { passive: true });
+
+          window.addEventListener("touchmove", startDesktop, { passive: true });
         }
-      };
-    }
-  );
 
-  return () => {
-    mm.revert();
-  };
-}, []);
+        const monitor = () => {
+          if (!video.duration) return;
+
+          const progress = video.currentTime / video.duration;
+
+          if (progress > 0.82 && !revealedRef.current) {
+            revealedRef.current = true;
+
+            gsap.to(navbarRef.current, {
+              opacity: 1,
+              y: 0,
+              duration: 1,
+            });
+
+            gsap.to(contentRef.current, {
+              opacity: 1,
+              y: 0,
+              duration: 1.4,
+            });
+          }
+        };
+
+        const complete = () => {
+          setEnded(true);
+
+          gsap.to(contentRef.current, {
+            y: -60,
+            duration: 1.2,
+          });
+
+          ScrollTrigger.refresh();
+        };
+
+        video.addEventListener("timeupdate", monitor);
+
+        video.addEventListener("ended", complete);
+
+        return () => {
+          trigger.kill();
+
+          video.removeEventListener("timeupdate", monitor);
+
+          video.removeEventListener("ended", complete);
+
+          if (startDesktop) {
+            window.removeEventListener("wheel", startDesktop);
+
+            window.removeEventListener("touchmove", startDesktop);
+          }
+        };
+      },
+    );
+
+    return () => {
+      mm.revert();
+    };
+  }, []);
+
+  const goToProjects = () => {
+  gsap.to(window, {
+    duration: 1.8,
+    scrollTo: {
+      y: "#projects",
+      offsetY: 0,
+    },
+    ease: "power3.inOut",
+  });
+};
 
   const handleStart = () => {
     if (startedRef.current) return;
@@ -195,7 +173,14 @@ function Hero() {
           muted
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="
+absolute inset-0
+w-full h-full
+object-cover
+
+object-center
+md:object-center
+"
         >
           <source src="/videos/construction.mp4" type="video/mp4" />
         </video>
@@ -211,43 +196,130 @@ function Hero() {
         {!started && (
           <div
             ref={btnRef}
-            className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-6 md:hidden"
+            className="
+      absolute inset-0 z-40
+      flex flex-col items-center justify-center
+      md:hidden
+      bg-black/20 backdrop-blur-[2px]
+    "
           >
-            {/* Logo mark — minimal on mobile */}
-            <p
-              className="uppercase tracking-[6px] md:tracking-[10px] text-white/40
-                          text-[9px] md:text-[11px] font-light"
-            >
-              BuildX — Construction Excellence
-            </p>
+            {/* Top Label */}
+            <div className="overflow-hidden">
+              <p
+                className="
+          animate-fadeUp
+          uppercase
+          tracking-[10px]
+          text-[10px]
+          text-white/55
+          font-light
+        "
+              >
+                BuildX
+              </p>
+            </div>
 
-            {/* Play button */}
+            {/* PLAY BUTTON */}
             <button
               onClick={handleStart}
-              className="group relative flex items-center justify-center
-                         w-16 h-16 md:w-20 md:h-20
-                         rounded-full border border-white/30
-                         hover:border-white/60 transition duration-300"
+              className="
+        group
+        relative
+        mt-8
+        flex items-center justify-center
+        w-24 h-24
+      "
             >
-              {/* Pulse ring */}
-              <span
-                className="absolute inset-0 rounded-full border border-white/10
-                               animate-ping"
+              {/* Glow */}
+              <div
+                className="
+          absolute inset-0
+          rounded-full
+          bg-white/10
+          blur-2xl
+          scale-125
+          animate-pulse
+        "
               />
-              {/* Triangle play icon */}
-              <svg
-                viewBox="0 0 24 24"
-                fill="white"
-                className="w-5 h-5 md:w-6 md:h-6 translate-x-0.5 opacity-80
-                           group-hover:opacity-100 transition"
+
+              {/* Rotating Ring */}
+              <div
+                className="
+          absolute inset-0
+          rounded-full
+          border border-white/15
+          animate-[spin_10s_linear_infinite]
+        "
+              />
+
+              {/* Secondary Ring */}
+              <div
+                className="
+          absolute inset-[6px]
+          rounded-full
+          border border-white/25
+          animate-[pulse_3s_ease-in-out_infinite]
+        "
+              />
+
+              {/* Main Circle */}
+              <div
+                className="
+          relative
+          w-20 h-20
+          rounded-full
+          bg-white/10
+          backdrop-blur-xl
+          border border-white/30
+
+          flex items-center justify-center
+
+          transition-all duration-500
+          group-active:scale-90
+          group-hover:scale-105
+        "
               >
-                <path d="M8 5v14l11-7z" />
-              </svg>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="white"
+                  className="
+            w-8 h-8
+            translate-x-[2px]
+            opacity-90
+            transition
+            group-hover:scale-110
+          "
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
             </button>
 
-            <p className="text-white/30 text-[10px] md:text-xs font-light tracking-widest uppercase">
-              Tap to begin
-            </p>
+            {/* Bottom Text */}
+            <div className="mt-10 text-center">
+              <p
+                className="
+          text-white/80
+          text-[11px]
+          uppercase
+          tracking-[8px]
+          font-light
+          animate-pulse
+        "
+              >
+                Tap To Begin
+              </p>
+
+              <p
+                className="
+          mt-2
+          text-white/35
+          text-[11px]
+        "
+              >
+                Experience the journey
+              </p>
+            </div>
           </div>
         )}
 
@@ -281,6 +353,7 @@ function Hero() {
               Transforming construction into iconic architectural experiences.
             </p>
             <button
+            onClick={goToProjects}
               className="mt-6 md:mt-10 px-5 md:px-6 py-2.5 md:py-3
                          bg-white text-black rounded-full
                          text-xs md:text-sm font-light
